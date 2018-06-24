@@ -34,7 +34,10 @@
 					[@matches]
 				</tbody>
 			</table>
-			<h2>last updated: [@updated]</h2>
+			<p>
+				last updated: [@updated]<br>
+				<a href="https://github.com/ashaibani/world-cup-raffle">src code</a>
+			</p>
 			<br>
 		</center>
 	</body>
