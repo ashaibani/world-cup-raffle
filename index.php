@@ -1,7 +1,6 @@
 <?php
-/*ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);*/
+ini_set('display_errors', 1);
+date_default_timezone_set('Europe/London');
 include('./includes/players.php');
 include('./includes/data.php');
 include('./includes/template.php');
@@ -82,11 +81,10 @@ foreach($dataHandler->getUpcomingFixtures() as $fixture) {
 $pointsContents = Template::merge($pointsTemplate);
 $matchesContents = Template::merge($matchesTemplate);
 
-$template->set('title', 'world cup for jews');
+$template->set('title', 'world cup raffle');
 $template->set('points', $pointsContents);
 $template->set('matches', $matchesContents);
 
-$template->set('updated', 'now bitch');
-
+$template->set('updated', ($dataHandler->getLastUpdated() > 120 ? 'now!' : $dataHandler->getLastUpdated().' seconds ago'));
 echo $template->output();
 ?>

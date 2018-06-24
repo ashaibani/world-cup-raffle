@@ -35,7 +35,8 @@
 				</tbody>
 			</table>
 			<p>
-				last updated: [@updated]<br>
+				updates are made every [@interval] minute(s)<br>
+				last update was: [@updated]<br>
 				<a href="https://github.com/ashaibani/world-cup-raffle">src code</a>
 			</p>
 			<br>

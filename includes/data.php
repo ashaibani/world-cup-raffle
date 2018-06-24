@@ -1,14 +1,15 @@
 <?php
-class WorldCupData{
-	public $baseUri;
-	public $apiKey;
-	public $competition;
-	public $config;
-	
-	public $fixtures;
+class WorldCupData {
+	private $baseUri;
+	private $apiKey;
+	private $competition;
+	private $config;
+	private $lastUpdated;
+	private $fixtures;
 	
 	public function __construct() {
 		$this->config = parse_ini_file('config.ini', true);
+		$this->lastUpdated = strtotime(file_get_contents('./lastUpdated'));
 		$this->baseUri = $this->config['baseUri'];
 		$this->apiKey = $this->config['apiKey'];
 		$this->competition = $this->config['competition'];
@@ -17,10 +18,17 @@ class WorldCupData{
 	}
 	
 	private function loadFixtures() {
-		$reqPrefs = array();
-		$reqPrefs['http']['method'] = 'GET';
-		$reqPrefs['http']['header'] = 'X-Auth-Token: ' . $this->apiKey;
-		$this->fixtures = json_decode(file_get_contents($this->baseUri.'competitions/'.$this->competition.'/fixtures/', false, stream_context_create($reqPrefs)), true)['fixtures'];
+		if($this->getLastUpdated() > 120) {
+			$reqPrefs = array();
+			$reqPrefs['http']['method'] = 'GET';
+			$reqPrefs['http']['header'] = 'X-Auth-Token: ' . $this->apiKey;
+			$this->fixtures = json_decode(file_get_contents($this->baseUri.'competitions/'.$this->competition.'/fixtures/', false, stream_context_create($reqPrefs)), true)['fixtures'];
+			$date = new DateTime();
+			file_put_contents('./lastUpdated', $date->format('Y-m-d H:i:s'));
+			file_put_contents("./fixtures.json",json_encode($this->fixtures));
+		} else {
+			$this->fixtures = json_decode(file_get_contents('./fixtures.json'), true);
+		}
 	}
 	
 	public function getFixtures() {
@@ -51,5 +59,8 @@ class WorldCupData{
 		return $temp;
 	}
 	
+	public function getLastUpdated() {
+		return time() - $this->lastUpdated;
+	}
 }
 ?>
