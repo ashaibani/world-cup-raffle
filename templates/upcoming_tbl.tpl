@@ -1,10 +1,9 @@
 					<tr>
 						<td>[@date]</td>
 						<td>[@time]</td>
+						<td>[@stage]</td>
 						<td>[@home]</td>
 						<td>[@away]</td>
 						<td>[@status]</td>
-						<td>[@result1]</td>
-						<td>[@result2]</td>
-						<td>[@result3]</td>
+						<td>[@result]</td>
 					</tr>

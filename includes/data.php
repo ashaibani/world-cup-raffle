@@ -1,28 +1,25 @@
 <?php
 class WorldCupData {
 	private $baseUri;
-	private $apiKey;
-	private $competition;
 	private $config;
 	private $lastUpdated;
 	private $fixtures;
+	
+	public $updateInterval;
 	
 	public function __construct() {
 		$this->config = parse_ini_file('config.ini', true);
 		$this->lastUpdated = strtotime(file_get_contents('./lastUpdated'));
 		$this->baseUri = $this->config['baseUri'];
-		$this->apiKey = $this->config['apiKey'];
-		$this->competition = $this->config['competition'];
-		
+		$this->updateInterval = intval($this->config['updateInterval']);
 		$this->loadFixtures();
 	}
 	
 	private function loadFixtures() {
-		if($this->getLastUpdated() > 120) {
+		if($this->getLastUpdated() > $this->updateInterval) {
 			$reqPrefs = array();
 			$reqPrefs['http']['method'] = 'GET';
-			$reqPrefs['http']['header'] = 'X-Auth-Token: ' . $this->apiKey;
-			$this->fixtures = json_decode(file_get_contents($this->baseUri.'competitions/'.$this->competition.'/fixtures/', false, stream_context_create($reqPrefs)), true)['fixtures'];
+			$this->fixtures = json_decode(file_get_contents($this->baseUri, false, stream_context_create($reqPrefs)), true);
 			$date = new DateTime();
 			file_put_contents('./lastUpdated', $date->format('Y-m-d H:i:s'));
 			file_put_contents("./fixtures.json",json_encode($this->fixtures));
@@ -38,11 +35,11 @@ class WorldCupData {
 	public function getUpcomingFixtures() {
 		$temp = array();
 		foreach($this->fixtures as $fixture) {
-			$datentime = explode("T", $fixture["date"]);
+			$datentime = explode("T", $fixture["datetime"]);
 			$dateObj = new DateTime($datentime[0]);
 			$now = new DateTime();
 			$now->sub(new DateInterval('P1D'));
-			if($dateObj >= $now && $fixture['status'] != "SCHEDULED") {
+			if($dateObj >= $now && $fixture["home_team_country"] != null && $fixture["away_team_country"] != null) {
 				array_push($temp, $fixture);
 			}
 		}
@@ -52,7 +49,7 @@ class WorldCupData {
 	public function getAccountableFixtures() {
 		$temp = array();
 		foreach($this->fixtures as $fixture) {
-			if($fixture['status'] == 'FINISHED' || $fixture['status'] == 'IN_PLAY') {
+			if($fixture['status'] == 'completed' || $fixture['status'] == 'in progress') {
 				array_push($temp, $fixture); 
 			}
 		}

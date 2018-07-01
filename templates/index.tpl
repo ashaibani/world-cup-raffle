@@ -24,10 +24,11 @@
 					<tr>
 						<th>date</th>
 						<th>time</th>
+						<th>stage</th>
 						<th>home</th>
 						<th>away</th>
 						<th>status</th>
-						<th colspan="3">result</th>
+						<th>result</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -35,6 +36,7 @@
 				</tbody>
 			</table>
 			<p>
+				teams in bold are the winners of the match<br>
 				updates are made every [@interval] minute(s)<br>
 				last update was: [@updated]<br>
 				<a href="https://github.com/ashaibani/world-cup-raffle">src code</a>

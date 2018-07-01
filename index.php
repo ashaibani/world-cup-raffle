@@ -4,12 +4,11 @@ date_default_timezone_set('Europe/London');
 include('./includes/players.php');
 include('./includes/data.php');
 include('./includes/template.php');
-
+$teamPoints = array();
 $statusCodes = array(
-    "IN_PLAY" => "Currently being played",
-    "TIMED" => "To be played",
-	"SCHEDULED" => "To be scheduled",
-	"FINISHED" => "Finished"
+    "in progress" => "Currently being played",
+	"future" => "To be played",
+	"completed" => "Finished"
 );
 
 $playerHandler = new PlayerHandler();
@@ -17,19 +16,21 @@ $dataHandler = new WorldCupData();
 $template = new Template('index.tpl');
 
 foreach($dataHandler->getAccountableFixtures() as $fixture) {
-	$homePoints = intval($fixture["result"]["goalsHomeTeam"]);
-	$awayPoints = intval($fixture["result"]["goalsAwayTeam"]);
-	if(intval($fixture["result"]["goalsHomeTeam"]) > intval($fixture["result"]["goalsAwayTeam"])) {
+	$homePoints = intval($fixture["home_team"]["goals"]);
+	$awayPoints = intval($fixture["away_team"]["goals"]);
+	if($fixture['winner'] == $fixture["home_team_country"]) {
 		$homePoints = $homePoints + 3;
-	} else if(intval($fixture["result"]["goalsAwayTeam"]) > intval($fixture["result"]["goalsHomeTeam"])) {
+	} else if($fixture['winner'] == $fixture["away_team_country"]) {
 		$awayPoints = $awayPoints + 3;
-	} else if(intval($fixture["result"]["goalsHomeTeam"]) == intval($fixture["result"]["goalsAwayTeam"])) {
+	} else if($fixture['winner'] == "Draw") {
 		$homePoints = $homePoints + 1;
 		$awayPoints = $awayPoints + 1;
 	}
+	$teamPoints[$fixture["home_team_country"]] = $teamPoints[$fixture["home_team_country"]] + $homePoints;
+	$teamPoints[$fixture["away_team_country"]] = $teamPoints[$fixture["away_team_country"]] + $awayPoints;
 	
-	$playerHandler->addPoints($playerHandler->getPlayer($fixture["homeTeamName"]), $homePoints);
-	$playerHandler->addPoints($playerHandler->getPlayer($fixture["awayTeamName"]), $awayPoints);
+	$playerHandler->addPoints($playerHandler->getPlayer($fixture["home_team_country"]), $homePoints);
+	$playerHandler->addPoints($playerHandler->getPlayer($fixture["away_team_country"]), $awayPoints);
 }
 
 $i = 1;
@@ -46,7 +47,7 @@ foreach($playerHandler->getPoints() as $player => $points) {
 
 foreach($dataHandler->getUpcomingFixtures() as $fixture) {
 	$row = new Template('upcoming_tbl.tpl');
-	$datentime = explode("T", $fixture["date"]);
+	$datentime = explode("T", $fixture["datetime"]);
 	$time = substr($datentime[1], 0, -1);
 	
 	sscanf($time, "%d:%d:%d", $hours, $minutes, $seconds);
@@ -62,29 +63,25 @@ foreach($dataHandler->getUpcomingFixtures() as $fixture) {
 	
 	$row->set('date', $datentime[0]);
 	$row->set('time', $time);
-	$row->set('home', $fixture["homeTeamName"].' ('.$playerHandler->getPlayer($fixture["homeTeamName"]).')');
-	$row->set('away', $fixture["awayTeamName"].' ('.$playerHandler->getPlayer($fixture["awayTeamName"]).')');
+	$row->set('stage', $fixture['stage_name']);
+	$row->set('home', ($fixture['winner'] == $fixture["home_team_country"] ? '<b>'.$fixture["home_team_country"].'</b>' : $fixture["home_team_country"].'').' ('.$playerHandler->getPlayer($fixture["home_team_country"]).')');
+	$row->set('away', ($fixture['winner'] == $fixture["away_team_country"] ? '<b>'.$fixture["away_team_country"].'</b>' : $fixture["away_team_country"].'').' ('.$playerHandler->getPlayer($fixture["away_team_country"]).')');
 	$row->set('status', $statusCodes[$fixture["status"]]);
 	
-	if($fixture['status'] == 'IN_PLAY' || $fixture['status'] == "FINISHED") {
-		$row->set('result1', $fixture["result"]["goalsHomeTeam"]);
-		$row->set('result2', ':');
-		$row->set('result3', $fixture["result"]["goalsAwayTeam"]);
+	if($fixture['status'] == 'in progress' || $fixture['status'] == "completed") {
+		$row->set('result', $fixture["home_team"]["goals"] . ':' . $fixture["away_team"]["goals"]);
 	} else {
-		$row->set('result1', 'N');
-		$row->set('result2', '/');
-		$row->set('result3', 'A');
+		$row->set('result', 'N/A');
 	}
 	$matchesTemplate[] = $row;
 }
-
 $pointsContents = Template::merge($pointsTemplate);
 $matchesContents = Template::merge($matchesTemplate);
 
 $template->set('title', 'world cup raffle');
 $template->set('points', $pointsContents);
 $template->set('matches', $matchesContents);
-
-$template->set('updated', ($dataHandler->getLastUpdated() > 120 ? 'now!' : $dataHandler->getLastUpdated().' seconds ago'));
+$template->set('interval', ($dataHandler->updateInterval / 60));
+$template->set('updated', ($dataHandler->getLastUpdated() > $dataHandler->updateInterval ? 'now!' : $dataHandler->getLastUpdated().' seconds ago'));
 echo $template->output();
 ?>
